@@ -138,7 +138,7 @@ If you go to your new route you will see your change.
 
 # Exercise 2: Understand Buildconfig Strategy Options
 
-##What Is a Build?
+## What Is a Build?
 
 A build in OpenShift Container Platform is the process of transforming input parameters into a resulting object. Most often, builds are used to transform source code into a runnable container image.
 A build configuration, or BuildConfig, is characterized by a build strategy and one or more sources. The strategy determines the aforementioned process, while the sources provide its input.
@@ -156,10 +156,10 @@ And there are six types of sources that can be given as build input:
 * Input secrets
 * External artifacts
 
-##BuildConfig Object Definition
+## BuildConfig Object Definition
 
 We can check our health application to explore the BuildConfig object.
-Go back to your openshift console and click on 'Builds'
+Go back to your openshift console and click on `Builds`
 
 ![buildwindow](./assets/gotobuildwindow.png)
 
@@ -167,7 +167,7 @@ Select the application build
 
 ![selectbuild](./assets/selectourappbuild.png)
 
-Go to 'Configuration' and click on 'Actions' -> 'Edit YAML'
+Go to `Configuration` and click on `Actions` -> `Edit YAML`
 
 ![edityaml](./assets/configurationedityaml.png)
 
@@ -191,13 +191,13 @@ First look at the flow diagram below to understand how S2I build works :
 There are few options that are in S2I Stragety that I would like to talk about:
 1) Incremental Builds option which means it reuses artifacts from previously-built images. This option is basicaly a flag that controls whether an incremental build is attempted. If the builder image does not support incremental builds, the build will still succeed, but you will get a log message stating the incremental build was not successful because of a missing save-artifacts script.
 2) Force Pull option allow pulling new image version if its available in the registry to which the image stream points. This flag causes the local builder image to be ignored and a fresh version to be pulled. Setting forcePull to false results in the default behavior of honoring the image stored locally.
-'''
+
+```yaml
 strategy:
   sourceStrategy:
     from:
       kind: "ImageStreamTag"
       name: "builder-image:latest" 
     forcePull: true
-'''
-
+```
 
