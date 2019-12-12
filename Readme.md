@@ -137,7 +137,9 @@ If you go to your new route you will see your change.
 ![UI](./assets/updated-ui.png)
 
 # Exercise 2: Understand Buildconfig Strategy Options
+
 ##What Is a Build?
+
 A build in OpenShift Container Platform is the process of transforming input parameters into a resulting object. Most often, builds are used to transform source code into a runnable container image.
 A build configuration, or BuildConfig, is characterized by a build strategy and one or more sources. The strategy determines the aforementioned process, while the sources provide its input.
 The build strategies are:
@@ -154,19 +156,24 @@ And there are six types of sources that can be given as build input:
 * Input secrets
 * External artifacts
 
-#BuildConfig Object Definition
+##BuildConfig Object Definition
+
 We can check our health application to explore the BuildConfig object.
 Go back to your openshift console and click on 'Builds'
 
-![UI](./assets/gotobuildwindow.png)
+![buildwindow](./assets/gotobuildwindow.png)
 
 Select the application build
 
-![UI](./assets/selectourappbuild.png)
+![selectbuild](./assets/selectourappbuild.png)
 
 Go to 'Configuration' and click on 'Actions' -> 'Edit YAML'
 
-![UI](./assets/configurationedityaml.png)
+![edityaml](./assets/configurationedityaml.png)
+
+This is our Health app BuildConfig YAML
+
+![buildconfigyaml](./assets/buildconfigyaml.png)
 
 * This specification will create a new BuildConfig named patientui.
 * The postCommit section defines an optional build hook.
@@ -175,7 +182,22 @@ Go to 'Configuration' and click on 'Actions' -> 'Edit YAML'
 * The source section defines the source of the build. The source type determines the primary source of input, and can be either Git, to point to a code repository location, Dockerfile, to build from an inline Dockerfile, or Binary, to accept binary payloads. It is possible to have multiple sources at once, refer to the documentation for each source type for details.
 * You can specify a list of triggers, which cause a new build to be created.
 
-![UI](./assets/buildconfigyaml.png)
+### Source-to-Image Strategy Options
+In the previous build we already used the S2I Strategy so we will try to understand the options and the flexability that we get from it.
+First look at the flow diagram below to understand how S2I build works :
 
+![s2iflow](./assets/s2i-flow.png)
+
+There are few options that are in S2I Stragety that I would like to talk about:
+1) Incremental Builds option which means it reuses artifacts from previously-built images. This option is basicaly a flag that controls whether an incremental build is attempted. If the builder image does not support incremental builds, the build will still succeed, but you will get a log message stating the incremental build was not successful because of a missing save-artifacts script.
+2) Force Pull option allow pulling new image version if its available in the registry to which the image stream points. This flag causes the local builder image to be ignored and a fresh version to be pulled. Setting forcePull to false results in the default behavior of honoring the image stored locally.
+'''
+strategy:
+  sourceStrategy:
+    from:
+      kind: "ImageStreamTag"
+      name: "builder-image:latest" 
+    forcePull: true
+'''
 
 
