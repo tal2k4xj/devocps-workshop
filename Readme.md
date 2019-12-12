@@ -143,10 +143,10 @@ If you go to your new route you will see your change.
 A build in OpenShift Container Platform is the process of transforming input parameters into a resulting object. Most often, builds are used to transform source code into a runnable container image.
 A build configuration, or BuildConfig, is characterized by a build strategy and one or more sources. The strategy determines the aforementioned process, while the sources provide its input.
 The build strategies are:
-* Source-to-Image (S2I) (description, options)
-* Pipeline (description, options)
-* Docker (description, options)
-* Custom (description, options)
+* Source-to-Image (S2I)
+* Pipeline 
+* Docker 
+* Custom 
 
 And there are six types of sources that can be given as build input:
 * Git
@@ -189,8 +189,18 @@ First look at the flow diagram below to understand how S2I build works :
 ![s2iflow](./assets/s2i-flow.png)
 
 There are few options that are in S2I Stragety that I would like to talk about:
-1) Incremental Builds option which means it reuses artifacts from previously-built images. This option is basicaly a flag that controls whether an incremental build is attempted. If the builder image does not support incremental builds, the build will still succeed, but you will get a log message stating the incremental build was not successful because of a missing save-artifacts script.
-2) Force Pull option allow pulling new image version if its available in the registry to which the image stream points. This flag causes the local builder image to be ignored and a fresh version to be pulled. Setting forcePull to false results in the default behavior of honoring the image stored locally.
+
+1) Incremental Builds - which means it reuses artifacts from previously-built images. This option is basicaly a flag that controls whether an incremental build is attempted. If the builder image does not support incremental builds, the build will still succeed, but you will get a log message stating the incremental build was not successful because of a missing save-artifacts script.
+```yaml
+strategy:
+  sourceStrategy:
+    from:
+      kind: "ImageStreamTag"
+      name: "incremental-image:latest" 
+    incremental: true
+```
+
+2) Force Pull - allow pulling new image version if its available in the registry to which the image stream points. This flag causes the local builder image to be ignored and a fresh version to be pulled. Setting forcePull to false results in the default behavior of honoring the image stored locally.
 
 ```yaml
 strategy:
@@ -200,4 +210,37 @@ strategy:
       name: "builder-image:latest" 
     forcePull: true
 ```
+
+3) Extended builds - For compiled languages (Go, C, C++, Java, etc.) the dependencies necessary for compilation might increase the size of the image or introduce vulnerabilities that can be exploited. To avoid these problems, S2I (Source-to-Image) introduces a two-image build process that allows an application to be built via the normal flow in a builder image, but then injects the resulting application artifacts into a runtime-only image for execution.
+```yaml
+strategy:
+  type: "Source"
+  sourceStrategy:
+    from:
+      kind: "ImageStreamTag"
+      name: "builder-image:latest"
+    runtimeImage: 
+      kind: "ImageStreamTag"
+      name: "runtime-image:latest"
+    runtimeArtifacts: 
+      - sourcePath: "/path/to/source"
+        destinationDir: "path/to/destination"
+```
+### Docker Strategy Options
+
+Before we will explain about this strategy lets try it first.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
