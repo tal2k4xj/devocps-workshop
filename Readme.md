@@ -367,6 +367,7 @@ Download the `ROOT.war` from the workshop git :
 $ git clone https://github.com/tal2k4xj/devocps-workshop.git
 $ cd devocps-workshop
 $ mv ROOT.war ../ROOT.war
+$ cd ..
 ``` 
 
 Create a new BuildConfig for that Dockerfile:
@@ -457,4 +458,10 @@ $ oc get route mavenapp
 
 The Custom build strategy allows developers to define a specific builder image responsible for the entire build process. Using your own builder image allows you to customize your build process.
 By allowing you to define a specific builder image responsible for the entire build process, OpenShift Container Platform’s Custom build strategy was designed to fill a gap created with the increased popularity of creating container images. When there is a requirement for a build to still produce individual artifacts (packages, JARs, WARs, installable ZIPs, and base images, for example), a Custom builder image using the Custom build strategy is the perfect match to fill that gap.
+
+#### References 
+https://github.com/IBM/openshift101/tree/master/workshop
+https://docs.openshift.com/container-platform/3.4/dev_guide/builds/build_strategies.html
+https://docs.openshift.com/container-platform/3.4/architecture/core_concepts/builds_and_image_streams.html
+https://docs.openshift.com/aro/dev_guide/dev_tutorials/binary_builds.html#binary-builds-local-code-changes
 
