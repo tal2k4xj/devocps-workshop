@@ -247,18 +247,18 @@ Paste the command in the Cloud Shell in order to be conected to the cluster.
 
 Use the `oc project` command to switch between projects :
 ```
-	$ oc project example-health
+$ oc project example-health
 ```
 
 Create a local directory to hold your code:
 ```
-	$ mkdir myapp
-	$ cd myapp
+$ mkdir myapp
+$ cd myapp
 ```
 
 Now lets create a Dockerfile that we will use in the docker strategy :
 ```
-	$ nano Dockerfile
+$ nano Dockerfile
 ```
 
 Copy and paste the following docker file 
@@ -273,7 +273,7 @@ To exit use CTRL+X -> y -> enter (save and exit).
 
 We need to add a html file to our app, lets create it :
 ```
-	$ nano index.html
+$ nano index.html
 ```
 
 Paste the following inside the html :
@@ -292,23 +292,23 @@ Paste the following inside the html :
 
 To create our build we will use the following command :
 ```
-	$ oc new-build --strategy docker --binary --docker-image centos:centos7 --name myapp
+$ oc new-build --strategy docker --binary --docker-image centos:centos7 --name myapp
 ```
 
 Start a binary build using the local directory’s content:
 ```
-	$ oc start-build myapp --from-dir . --follow
+$ oc start-build myapp --from-dir . --follow
 ```
 
 Deploy the application using `new-app`, then create a route for it:
 ```
-	$ oc new-app myapp
-	$ oc expose svc/myapp
+$ oc new-app myapp
+$ oc expose svc/myapp
 ```
 
 Get the host name for your route and navigate to it:
 ```
-	$ oc get route myapp
+$ oc get route myapp
 ```
 
 Go to the `HOST/PORT` route in your browser to see the application: 
@@ -338,11 +338,6 @@ strategy:
     noCache: true
 ```
 
-### Custom Strategy Options
-
-The Custom build strategy allows developers to define a specific builder image responsible for the entire build process. Using your own builder image allows you to customize your build process.
-By allowing you to define a specific builder image responsible for the entire build process, OpenShift Container Platform’s Custom build strategy was designed to fill a gap created with the increased popularity of creating container images. When there is a requirement for a build to still produce individual artifacts (packages, JARs, WARs, installable ZIPs, and base images, for example), a Custom builder image using the Custom build strategy is the perfect match to fill that gap.
-
 ### Pipeline Strategy Options
 
 The Pipeline build strategy allows developers to define a Jenkins pipeline for execution by the Jenkins pipeline plugin. The build can be started, monitored, and managed by OpenShift Container Platform in the same way as any other build type.
@@ -350,32 +345,34 @@ The Pipeline build strategy allows developers to define a Jenkins pipeline for e
 Lets create our own Pipeline Strategy.
 Create a new directory for your application:
 ```
-	$ mkdir mavenapp
-	$ cd mavenapp
+$ mkdir mavenapp
+$ cd mavenapp
 ```
 
 Create a `Dockerfile` that copies a WAR to the appropriate location inside a wildfly image for execution. 
 ```
-	$ nano Dockerfile
+$ nano Dockerfile
 ```
 
 Copy the following to a local file named `Dockerfile`:
 ```
 FROM wildfly:latest
-COPY ROOT.war /wildfly/standalone/deployments/ROOT.war
+RUM git clone https://github.com/tal2k4xj/devocps-workshop.git
+RUM cd devocps-workshop
+RUN mv ROOT.war ../wildfly/standalone/deployments/ROOT.war
 CMD  $STI_SCRIPTS_PATH/run
 ```
 
 Create a new BuildConfig for that Dockerfile:
 ```
-	$ cat Dockerfile | oc new-build -D - --name mavenapp
+$ cat Dockerfile | oc new-build -D - --name mavenapp
 ```
 
 Create a BuildConfig with the Jenkins pipeline that will build a WAR and then use that WAR to build an image using the previously created `Dockerfile`. The same pattern can be used for other platforms where a binary artifact is built by a set of tools and is then combined with a different runtime image for the final package. 
 
 Create `mavenapp-pipeline.yml`:
 ```
-	$ nano mavenapp-pipeline.yml
+$ nano mavenapp-pipeline.yml
 ```
 
 Save the following code to `mavenapp-pipeline.yml`:
@@ -429,7 +426,7 @@ Create the pipeline build. If Jenkins is not deployed to your project, creating 
 
 Once Jenkins is ready, start the pipeline defined previously:
 ```
-	$ oc start-build mavenapp-pipeline
+$ oc start-build mavenapp-pipeline
 ```
 As said before this might take few minutes to complete so while we wait lets explore our pipline.
 Go to Openshift web console and click on `Builds` -> `Pipelines` and click on the build.
@@ -441,42 +438,17 @@ Go to Openshift web console and click on `Builds` -> `Pipelines` and click on th
 When the pipeline build finish you can go back to the Cloud Shell and continue to create our app.
 When the pipeline has finished building, deploy the new application using new-app and expose its route:
 ```
-	$ oc new-app mavenapp
-	$ oc expose svc/mavenapp
+$ oc new-app mavenapp
+$ oc expose svc/mavenapp
 ```
 
 Using your browser, navigate to the route for the application:
 ```
-	$ oc get route mavenapp
+$ oc get route mavenapp
 ```
 
+### Custom Strategy Options
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+The Custom build strategy allows developers to define a specific builder image responsible for the entire build process. Using your own builder image allows you to customize your build process.
+By allowing you to define a specific builder image responsible for the entire build process, OpenShift Container Platform’s Custom build strategy was designed to fill a gap created with the increased popularity of creating container images. When there is a requirement for a build to still produce individual artifacts (packages, JARs, WARs, installable ZIPs, and base images, for example), a Custom builder image using the Custom build strategy is the perfect match to fill that gap.
 
