@@ -357,11 +357,17 @@ $ nano Dockerfile
 Copy the following to a local file named `Dockerfile`:
 ```
 FROM wildfly:latest
-RUM git clone https://github.com/tal2k4xj/devocps-workshop.git
-RUM cd devocps-workshop
-RUN mv ROOT.war ../wildfly/standalone/deployments/ROOT.war
+COPY ROOT.war /wildfly/standalone/deployments/ROOT.war
 CMD  $STI_SCRIPTS_PATH/run
 ```
+
+As you can see we will need a `ROOT.war` file in order to run this application.
+Download the `ROOT.war` from the workshop git :
+```
+$ git clone https://github.com/tal2k4xj/devocps-workshop.git
+$ cd devocps-workshop
+$ mv ROOT.war ../ROOT.war
+``` 
 
 Create a new BuildConfig for that Dockerfile:
 ```
@@ -421,7 +427,7 @@ spec:
 
 Create the pipeline build. If Jenkins is not deployed to your project, creating the BuildConfig with the pipeline will result in Jenkins getting deployed. It may take a couple of minutes before Jenkins is ready to build your pipeline. You can check the status of the Jenkins rollout by invoking, `oc rollout status dc/jenkins`:
 ```
-	$ oc create -f ./mavenapp-pipeline.yml
+$ oc create -f ./mavenapp-pipeline.yml
 ```
 
 Once Jenkins is ready, start the pipeline defined previously:
