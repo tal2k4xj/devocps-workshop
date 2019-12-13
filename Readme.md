@@ -228,7 +228,243 @@ strategy:
 ```
 ### Docker Strategy Options
 
-Before we will explain about this strategy lets try it first.
+Before we will explain about this strategy lets try it first and now we will use `oc` CLI.
+To use it normally you have to install it but to save time we will use IBM Cloud Shell : https://workshop.shell.cloud.ibm.com/
+You will have to login with your IBM Cloud user and than use the password : ikslab
+
+![setshell](./assets/setshell.png)
+
+1) Select the account with the openshift cluster.
+2) Start the terminal.
+
+Now that you have terminal to use with everything you need installed copy the login command from OpenShift web console :
+
+![openlogin](./assets/openlogin.png)
+
+Paste the command in the Cloud Shell in order to be conected to the cluster.
+
+![pastelogin](./assets/pastelogincmd.png)
+
+Use the `oc project` command to switch between projects :
+```
+	$ oc project example-health
+```
+
+Create a local directory to hold your code:
+```
+	$ mkdir myapp
+	$ cd myapp
+```
+
+Now lets create a Dockerfile that we will use in the docker strategy :
+```
+	$ nano Dockerfile
+```
+
+Copy and paste the following docker file 
+```
+FROM centos:centos7
+EXPOSE 8080
+COPY index.html /var/run/web/index.html
+CMD cd /var/run/web && python -m SimpleHTTPServer 8080
+```
+
+To exit use CTRL+X -> y -> enter (save and exit).
+
+We need to add a html file to our app, lets create it :
+```
+	$ nano index.html
+```
+
+Paste the following inside the html :
+```html
+<html>
+  <head>
+    <title>My local app</title>
+  </head>
+  <body>
+    <h1>Hello World</h1>
+    <p>This is my local application</p>
+  </body>
+</html>
+```
+
+
+To create our build we will use the following command :
+```
+	$ oc new-build --strategy docker --binary --docker-image centos:centos7 --name myapp
+```
+
+Start a binary build using the local directory’s content:
+```
+	$ oc start-build myapp --from-dir . --follow
+```
+
+Deploy the application using `new-app`, then create a route for it:
+```
+	$ oc new-app myapp
+	$ oc expose svc/myapp
+```
+
+Get the host name for your route and navigate to it:
+```
+	$ oc get route myapp
+```
+
+Go to the `HOST/PORT` route in your browser to see the application: 
+```
+NAME      HOST/PORT                                                                                                          PATH      SERVICES   PORT       TERMINATION   WILDCARD
+myapp     myapp-example-health.talne-democluster-5290c8c8e5797924dc1ad5d1b85b37c0-0001.us-south.containers.appdomain.cloud             myapp      8080-tcp                 None
+```
+
+After having built and deployed your code, you can iterate by making changes to your local files and starting new builds by invoking `oc start-build myapp --from-dir`. Once built, the code will be automatically deployed and the changes will be reflected in your browser when you refresh the page.
+
+You can go back to Openshift web console and see our new deployed app and the build, go and check the new buildconfig and see the difference.
+
+There are two more things that I would like to cover about docker strategy.
+
+1) Dockerfile Path - By default, Docker builds use a Dockerfile (named Dockerfile) located at the root of the context specified in the `BuildConfig.spec.source.contextDir` field.
+The `dockerfilePath` field allows the build to use a different path to locate your Dockerfile, relative to the `BuildConfig.spec.source.contextDir` field. It can be simply a different file name other than the default Dockerfile (for example, MyDockerfile), or a path to a Dockerfile in a subdirectory (for example, dockerfiles/app1/Dockerfile):
+```yaml
+strategy:
+  dockerStrategy:
+    dockerfilePath: dockerfiles/app1/Dockerfile
+```
+
+2) No Cache - Docker builds normally reuse cached layers found on the host performing the build. Setting the `noCache` option to true forces the build to ignore cached layers and rerun all steps of the Dockerfile:
+```yaml
+strategy:
+  dockerStrategy:
+    noCache: true
+```
+
+### Custom Strategy Options
+
+The Custom build strategy allows developers to define a specific builder image responsible for the entire build process. Using your own builder image allows you to customize your build process.
+By allowing you to define a specific builder image responsible for the entire build process, OpenShift Container Platform’s Custom build strategy was designed to fill a gap created with the increased popularity of creating container images. When there is a requirement for a build to still produce individual artifacts (packages, JARs, WARs, installable ZIPs, and base images, for example), a Custom builder image using the Custom build strategy is the perfect match to fill that gap.
+
+### Pipeline Strategy Options
+
+The Pipeline build strategy allows developers to define a Jenkins pipeline for execution by the Jenkins pipeline plugin. The build can be started, monitored, and managed by OpenShift Container Platform in the same way as any other build type.
+
+Lets create our own Pipeline Strategy.
+Create a new directory for your application:
+```
+	$ mkdir mavenapp
+	$ cd mavenapp
+```
+
+Create a `Dockerfile` that copies a WAR to the appropriate location inside a wildfly image for execution. 
+```
+	$ nano Dockerfile
+```
+
+Copy the following to a local file named `Dockerfile`:
+```
+FROM wildfly:latest
+COPY ROOT.war /wildfly/standalone/deployments/ROOT.war
+CMD  $STI_SCRIPTS_PATH/run
+```
+
+Create a new BuildConfig for that Dockerfile:
+```
+	$ cat Dockerfile | oc new-build -D - --name mavenapp
+```
+
+Create a BuildConfig with the Jenkins pipeline that will build a WAR and then use that WAR to build an image using the previously created `Dockerfile`. The same pattern can be used for other platforms where a binary artifact is built by a set of tools and is then combined with a different runtime image for the final package. 
+
+Create `mavenapp-pipeline.yml`:
+```
+	$ nano mavenapp-pipeline.yml
+```
+
+Save the following code to `mavenapp-pipeline.yml`:
+```yaml
+apiVersion: v1
+kind: BuildConfig
+metadata:
+  name: mavenapp-pipeline
+spec:
+  strategy:
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        pipeline {
+          agent { label "maven" }
+          stages {
+            stage("Clone Source") {
+              steps {
+                checkout([$class: 'GitSCM',
+                            branches: [[name: '*/master']],
+                            extensions: [
+                              [$class: 'RelativeTargetDirectory', relativeTargetDir: 'mavenapp']
+                            ],
+                            userRemoteConfigs: [[url: 'https://github.com/openshift/openshift-jee-sample.git']]
+                        ])
+              }
+            }
+            stage("Build WAR") {
+              steps {
+                dir('mavenapp') {
+                  sh 'mvn clean package -Popenshift'
+                }
+              }
+            }
+            stage("Build Image") {
+              steps {
+                dir('mavenapp/target') {
+                  sh 'oc start-build mavenapp --from-dir . --follow'
+                }
+              }
+            }
+          }
+        }
+    type: JenkinsPipeline
+  triggers: []
+```
+
+Create the pipeline build. If Jenkins is not deployed to your project, creating the BuildConfig with the pipeline will result in Jenkins getting deployed. It may take a couple of minutes before Jenkins is ready to build your pipeline. You can check the status of the Jenkins rollout by invoking, `oc rollout status dc/jenkins`:
+```
+	$ oc create -f ./mavenapp-pipeline.yml
+```
+
+Once Jenkins is ready, start the pipeline defined previously:
+```
+	$ oc start-build mavenapp-pipeline
+```
+As said before this might take few minutes to complete so while we wait lets explore our pipline.
+Go to Openshift web console and click on `Builds` -> `Pipelines` and click on the build.
+
+![buildpipeline](./assets/buildpipeline.png)
+
+![explorebuild](./assets/explorebuild.png)
+
+When the pipeline build finish you can go back to the Cloud Shell and continue to create our app.
+When the pipeline has finished building, deploy the new application using new-app and expose its route:
+```
+	$ oc new-app mavenapp
+	$ oc expose svc/mavenapp
+```
+
+Using your browser, navigate to the route for the application:
+```
+	$ oc get route mavenapp
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
