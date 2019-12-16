@@ -124,7 +124,7 @@ Once done go to the bottom and click `commit changes`.
 
 Go to the openshift build page again. This happens quite fast so you might not see the running state. But the moment we made that commit a build was kicked off.
 
-![running build](../assets/running-build.png)
+![running build](./assets/running-build.png)
 
 In a moment it will show completed. Navigate to the overview page to find the route.
 
