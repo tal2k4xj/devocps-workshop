@@ -158,6 +158,10 @@ And there are six types of sources that can be given as build input:
 
 ## BuildConfig Object Definition
 
+Lets look for a second where is the BuildConfig takes place inside our Openshift cluster.
+
+![buildconfigdiagram](./assets/buildconfigdiagram.png)
+
 We can check our health application to explore the BuildConfig object.
 Go back to your openshift console and click on `Builds`
 
